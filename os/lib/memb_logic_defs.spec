@@ -39,12 +39,12 @@
   @
   @*/
 
-/*@ predicate not_in{L}(integer e, char *t, integer from, integer to) =
+/*@ predicate not_in{L}(integer e, bool *t, integer from, integer to) =
   @   \forall integer j; from <= j < to ==> t[j] != e;
   @
   @*/
 
-/*@ predicate everywhere{L}(integer e, char *t, integer from, integer to) =
+/*@ predicate everywhere{L}(integer e, bool *t, integer from, integer to) =
   @   \forall integer j; from <= j < to ==> t[j] == e;
   @*/
 
@@ -57,7 +57,7 @@
   @   && \valid((char*) m->mem + (0 .. (m->size * m->num - 1)))
   @   && m->size > 0
   @   && m->size * m->num <= INT_MAX
-  @   && \separated(m->used + (0 .. (m->num - 1)),
+  @   && \separated(m, m->used + (0 .. (m->num - 1)),
   @   (char*) m->mem + (0 .. m->size * m->num - 1));
   @
   @ // Converting from pointer to index and backwards.
@@ -116,12 +116,16 @@ static inline void occ_a_split(int e, bool *t, int from, int cut, int to)
 #define same_elems_means_same_occ(_L1, _L2, _value, _array, _from, _to)	\
   /@									\
     loop invariant _from <= _k <= _to ;					\
-    loop invariant occ_a{_L1}(_value, _array, _from, _k) ==		\
-                   occ_a{_L2}(_value, _array, _from, _k) ; 		\
+    loop invariant occ_a{_L1}(_value, _array, _from, \at(_k, Here)) ==  \
+                   occ_a{_L2}(_value, _array, _from, \at(_k, Here)); 	\
     loop assigns _k ;							\
     loop variant _to - _k ;						\
   @/									\
-  for(int _k = _from ; _k < _to ; ++ _k) ;				\
+  for(int _k = _from ; _k < _to ; ++ _k) {				\
+    /@ assert \at(_array[\at(_k, Here)], _L1) ==                        \
+              \at(_array[\at(_k, Here)], _L2) ;                         \
+    @/                                                                  \
+  }                                                                     \
   /@ assert occ_a{_L1}(_value, _array, _from, _to) ==			\
             occ_a{_L2}(_value, _array, _from, _to) ;			\
   @/
